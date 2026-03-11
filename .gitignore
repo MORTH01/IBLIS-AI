@@ -1,0 +1,7 @@
+# Never push these
+backend/.env
+backend/data/
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+.DS_Store

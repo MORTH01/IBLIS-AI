@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Personal AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c0c0f;
+      --surface: #13131a;
+      --surface2: #1a1a24;
+      --border: #252535;
+      --accent: #7c6af7;
+      --accent2: #4eeaaa;
+      --text: #e8e8f0;
+      --muted: #6b6b8a;
+      --high: #ff6b6b;
+      --med: #ffd166;
+      --low: #4eeaaa;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
+
+    /* Sidebar */
+    #sidebar { width: 260px; min-width: 260px; background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+    #sidebar-top { padding: 20px 16px 12px; flex-shrink: 0; }
+    .logo { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; padding: 0 8px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+    .logo-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+    .new-chat-btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 12px; padding: 10px; border-radius: 10px; background: var(--accent); border: none; color: white; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .new-chat-btn:hover { opacity: 0.85; }
+
+    #sidebar-nav { padding: 8px 16px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+    .nav-btn { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; cursor: pointer; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; color: var(--muted); background: transparent; border: none; width: 100%; text-align: left; transition: all 0.15s; }
+    .nav-btn:hover { background: var(--surface2); color: var(--text); }
+    .nav-btn.active { background: var(--surface2); color: var(--text); }
+
+    #sidebar-history { flex: 1; overflow-y: auto; padding: 0 16px 16px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .section-label { font-size: 10px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); padding: 14px 8px 6px; text-transform: uppercase; }
+
+    .chat-history-item { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 9px; cursor: pointer; margin-bottom: 2px; transition: background 0.15s; group: true; }
+    .chat-history-item:hover { background: var(--surface2); }
+    .chat-history-item.active-session { background: rgba(124,106,247,0.15); border-left: 2px solid var(--accent); }
+    .chat-history-title { flex: 1; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+    .chat-history-item:hover .chat-history-title { color: var(--text); }
+    .chat-history-item.active-session .chat-history-title { color: var(--text); }
+    .chat-history-date { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); flex-shrink: 0; }
+    .delete-session-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 12px; padding: 2px 4px; opacity: 0; flex-shrink: 0; border-radius: 4px; transition: opacity 0.15s; }
+    .chat-history-item:hover .delete-session-btn { opacity: 1; }
+    .delete-session-btn:hover { color: var(--high); background: rgba(255,107,107,0.1); }
+
+    /* Main */
+    #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .view { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+    .view.active { display: flex; }
+
+    /* Chat */
+    #chat-header { padding: 18px 28px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .chat-title { font-size: 15px; font-weight: 700; color: var(--text); max-width: 500px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .status-badge { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
+    .pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--accent2); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; box-shadow:0 0 0 0 rgba(78,234,170,0.4); } 50% { opacity:0.7; box-shadow:0 0 0 5px rgba(78,234,170,0); } }
+
+    #messages { flex: 1; overflow-y: auto; padding: 24px 28px; display: flex; flex-direction: column; gap: 20px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+    .message { display: flex; gap: 14px; max-width: 800px; }
+    .message.user { flex-direction: row-reverse; align-self: flex-end; }
+    .avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .avatar.ai { background: var(--accent); }
+    .avatar.user { background: var(--surface2); border: 1px solid var(--border); }
+    .bubble { padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.65; max-width: 640px; }
+    .message.ai .bubble { background: var(--surface2); border: 1px solid var(--border); border-top-left-radius: 4px; }
+    .message.user .bubble { background: var(--accent); color: white; border-top-right-radius: 4px; }
+    .bubble h2 { font-size: 15px; color: var(--accent); margin: 12px 0 6px; font-weight: 700; }
+    .bubble h3 { font-size: 14px; margin: 10px 0 5px; font-weight: 700; }
+    .bubble p { margin-bottom: 8px; }
+    .bubble ul, .bubble ol { padding-left: 20px; margin-bottom: 8px; }
+    .bubble li { margin-bottom: 4px; }
+    .bubble code { background: rgba(124,106,247,0.15); padding: 1px 6px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent); }
+    .bubble pre { background: rgba(0,0,0,0.4); padding: 12px; border-radius: 8px; overflow-x: auto; font-family: 'DM Mono', monospace; font-size: 12px; margin: 8px 0; border: 1px solid var(--border); }
+    .bubble pre code { background: none; padding: 0; color: var(--accent2); }
+    .bubble strong { color: var(--accent2); font-weight: 700; }
+    .bubble hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+    .msg-time { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 4px; padding: 0 4px; }
+    .message.user .msg-time { text-align: right; }
+
+    .thinking { display: flex; gap: 5px; align-items: center; padding: 14px 18px; }
+    .thinking span { width: 6px; height: 6px; border-radius: 50%; background: var(--muted); animation: bounce 1.2s infinite; }
+    .thinking span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
+
+    .date-divider { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+    .date-divider span { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; }
+    .date-divider::before, .date-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    #input-area { padding: 14px 28px 22px; border-top: 1px solid var(--border); flex-shrink: 0; }
+    #input-row { display: flex; gap: 10px; align-items: flex-end; background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 10px 12px; transition: border-color 0.2s; }
+    #input-row:focus-within { border-color: var(--accent); }
+    #chat-input { flex: 1; background: none; border: none; outline: none; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); resize: none; max-height: 120px; line-height: 1.5; }
+    #chat-input::placeholder { color: var(--muted); }
+    #send-btn { width: 34px; height: 34px; border-radius: 8px; background: var(--accent); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; flex-shrink: 0; transition: opacity 0.2s, transform 0.1s; }
+    #send-btn:hover { opacity: 0.85; }
+    #send-btn:active { transform: scale(0.95); }
+
+    /* Briefing */
+    #briefing-content { flex: 1; overflow-y: auto; padding: 32px; }
+    .briefing-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px 32px; max-width: 720px; font-size: 14px; line-height: 1.8; }
+    .briefing-box h2 { font-size: 18px; color: var(--accent); margin-bottom: 6px; }
+    .briefing-box h3 { font-size: 14px; margin: 16px 0 6px; }
+    .briefing-box p { margin-bottom: 10px; }
+    .briefing-box ul { padding-left: 20px; margin-bottom: 10px; }
+    .briefing-box li { margin-bottom: 6px; }
+    .briefing-box strong { color: var(--accent2); }
+    .briefing-btn { display: inline-flex; align-items: center; gap: 8px; background: var(--accent); color: white; border: none; padding: 11px 20px; border-radius: 10px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; margin-bottom: 24px; transition: opacity 0.2s; }
+    .briefing-btn:hover { opacity: 0.85; }
+
+    /* Tasks */
+    #tasks-content { flex: 1; overflow-y: auto; padding: 28px 32px; }
+    .tasks-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .tasks-title { font-size: 20px; font-weight: 800; }
+    #add-task-btn { background: var(--accent); color: white; border: none; padding: 9px 16px; border-radius: 9px; font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; cursor: pointer; }
+    .task-card { display: flex; align-items: center; gap: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; transition: border-color 0.2s; }
+    .task-card:hover { border-color: var(--accent); }
+    .task-card.done { opacity: 0.45; }
+    .task-checkbox { width: 20px; height: 20px; border-radius: 6px; border: 2px solid var(--border); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s; font-size: 11px; }
+    .task-checkbox.checked { background: var(--accent2); border-color: var(--accent2); color: var(--bg); }
+    .task-info { flex: 1; }
+    .task-title-text { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+    .task-card.done .task-title-text { text-decoration: line-through; }
+    .task-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); display: flex; gap: 12px; flex-wrap: wrap; }
+    .priority-tag { padding: 1px 7px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+    .p-high-tag { background: rgba(255,107,107,0.15); color: var(--high); }
+    .p-medium-tag { background: rgba(255,209,102,0.15); color: var(--med); }
+    .p-low-tag { background: rgba(78,234,170,0.15); color: var(--low); }
+    .delete-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px; opacity: 0; transition: opacity 0.2s; }
+    .task-card:hover .delete-btn { opacity: 1; }
+
+    /* Modal */
+    #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; align-items: center; justify-content: center; }
+    #modal-overlay.open { display: flex; }
+    #modal { background: var(--surface2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 400px; }
+    .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 20px; }
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px; }
+    .field input, .field select, .field textarea { width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; outline: none; transition: border-color 0.2s; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+    .field select option { background: var(--surface2); }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel { padding: 9px 16px; border-radius: 8px; border: 1px solid var(--border); background: none; color: var(--muted); cursor: pointer; font-family: 'Syne', sans-serif; font-size: 13px; }
+    .btn-save { padding: 9px 20px; border-radius: 8px; border: none; background: var(--accent); color: white; cursor: pointer; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; }
+
+    /* Profile */
+    #profile-content { flex: 1; overflow-y: auto; padding: 28px 32px; }
+    .profile-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 24px; margin-bottom: 16px; max-width: 700px; }
+    .profile-section h3 { font-size: 13px; font-weight: 700; color: var(--accent); margin-bottom: 14px; text-transform: uppercase; letter-spacing: 1px; }
+    .profile-row { display: flex; gap: 12px; margin-bottom: 12px; }
+    .profile-field { flex: 1; }
+    .profile-field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+    .profile-field input, .profile-field textarea { width: 100%; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; outline: none; transition: border-color 0.2s; }
+    .profile-field input:focus, .profile-field textarea:focus { border-color: var(--accent); }
+    .save-profile-btn { background: var(--accent); color: white; border: none; padding: 10px 22px; border-radius: 9px; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+
+    /* Empty state */
+    .empty-history { padding: 16px 8px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); text-align: center; }
+
+    /* Toast */
+    #toast { position: fixed; bottom: 30px; right: 30px; background: var(--surface2); border: 1px solid var(--border); padding: 12px 18px; border-radius: 10px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--accent2); opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; z-index: 200; }
+    #toast.show { opacity: 1; transform: translateY(0); }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<aside id="sidebar">
+  <div id="sidebar-top">
+    <div class="logo"><div class="logo-dot"></div>ZBox AI</div>
+    <button class="new-chat-btn" onclick="newChat()">＋ New Chat</button>
+  </div>
+
+  <div id="sidebar-nav">
+    <button class="nav-btn" onclick="showView('briefing', this)"><span></span>* Daily Briefing</button>
+    <button class="nav-btn" onclick="showView('tasks', this)"><span></span>* Tasks</button>
+    <button class="nav-btn" onclick="showView('profile', this)"><span></span>* My Profile</button>
+  </div>
+
+  <div id="sidebar-history">
+    <div class="section-label">Previous Chats</div>
+    <div id="chat-history-list"><div class="empty-history">No chats yet</div></div>
+  </div>
+</aside>
+
+<main id="main">
+
+  <!-- Chat -->
+  <div class="view active" id="view-chat">
+    <div id="chat-header">
+      <div class="chat-title" id="current-chat-title">New Chat</div>
+      <div class="status-badge"><div class="pulse"></div> Groq · Llama 3.1</div>
+    </div>
+    <div id="messages"></div>
+    <div id="input-area">
+      <div id="input-row">
+        <textarea id="chat-input" rows="1" placeholder="Ask anything… (Shift+Enter for new line)"></textarea>
+        <button id="send-btn" onclick="sendMessage()">↑</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Briefing -->
+  <div class="view" id="view-briefing">
+    <div id="briefing-content">
+      <div style="padding-bottom:24px;">
+        <div style="font-size:22px;font-weight:800;margin-bottom:6px;"> Daily Briefing</div>
+        <div style="color:var(--muted);font-size:13px;" id="brief-date"></div>
+      </div>
+      <button class="briefing-btn" onclick="loadBriefing()">⚡ Generate Briefing</button>
+      <div class="briefing-box" id="briefing-box" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- Tasks -->
+  <div class="view" id="view-tasks">
+    <div id="tasks-content">
+      <div class="tasks-header">
+        <div class="tasks-title">Tasks</div>
+        <button id="add-task-btn" onclick="openModal()">＋ Add Task</button>
+      </div>
+      <div id="task-list"></div>
+    </div>
+  </div>
+
+  <!-- Profile -->
+  <div class="view" id="view-profile">
+    <div id="profile-content">
+      <div style="font-size:22px;font-weight:800;margin-bottom:20px;">My Profile</div>
+      <div class="profile-section">
+        <h3>Personal Info</h3>
+        <div class="profile-row">
+          <div class="profile-field"><label>Name</label><input id="p-name" type="text" placeholder="Your name" /></div>
+          <div class="profile-field"><label>Role / Title</label><input id="p-role" type="text" placeholder="e.g. CS Student" /></div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-field"><label>Timezone</label><input id="p-timezone" type="text" placeholder="e.g. IST, PST" /></div>
+          <div class="profile-field"><label>Work Style</label><input id="p-workstyle" type="text" placeholder="e.g. Deep work mornings" /></div>
+        </div>
+      </div>
+      <div class="profile-section">
+        <h3>Work Context</h3>
+        <div class="profile-field" style="margin-bottom:12px;"><label>About Me</label><textarea id="p-about" rows="3" placeholder="Tell your AI who you are, your background, what you're building..."></textarea></div>
+        <div class="profile-row">
+          <div class="profile-field"><label>Current Projects (comma separated)</label><input id="p-projects" type="text" placeholder="e.g. Portfolio website, Mobile app" /></div>
+        </div>
+        <div class="profile-row">
+          <div class="profile-field"><label>Skills (comma separated)</label><input id="p-skills" type="text" placeholder="e.g. Python, React, JavaScript" /></div>
+        </div>
+      </div>
+      <div class="profile-section">
+        <h3>Goals & Notes</h3>
+        <div class="profile-field" style="margin-bottom:12px;"><label>Goals</label><textarea id="p-goals" rows="2" placeholder="Your short and long term goals..."></textarea></div>
+        <div class="profile-field"><label>Extra Notes for AI</label><textarea id="p-notes" rows="2" placeholder="Anything else you want your AI to always remember..."></textarea></div>
+      </div>
+      <button class="save-profile-btn" onclick="saveProfile()"> Save Profile</button>
+    </div>
+  </div>
+
+</main>
+
+<!-- Task Modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <div class="modal-title">Add Task</div>
+    <div class="field"><label>Task Title</label><input id="t-title" type="text" placeholder="What needs to be done?" /></div>
+    <div class="field"><label>Priority</label>
+      <select id="t-priority">
+        <option value="high">🔴 High</option>
+        <option value="medium" selected>🟡 Medium</option>
+        <option value="low">🟢 Low</option>
+      </select>
+    </div>
+    <div class="field"><label>Due Date (optional)</label><input id="t-due" type="date" /></div>
+    <div class="field"><label>Notes (optional)</label><textarea id="t-notes" rows="2" placeholder="Any extra details..."></textarea></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" onclick="saveTask()">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const API = 'http://localhost:8000';
+
+  // ── Session management ──────────────────────────────────────────────────
+  // Store current session in localStorage so it persists across reloads
+  let currentSessionId = localStorage.getItem('currentSessionId') || generateSessionId();
+  let isLoading = false;
+
+  function generateSessionId() {
+    const id = 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+    localStorage.setItem('currentSessionId', id);
+    return id;
+  }
+
+  function newChat() {
+    currentSessionId = generateSessionId();
+    localStorage.setItem('currentSessionId', currentSessionId);
+    document.getElementById('messages').innerHTML = '';
+    document.getElementById('current-chat-title').textContent = 'New Chat';
+    showView('chat', null);
+    addWelcomeMessage();
+    loadChatHistory();
+  }
+
+  function addWelcomeMessage() {
+    addMessage('ai', `Hey! I'm your personal AI — I remember everything you've ever told me.\n\nWhat's on your mind?`);
+  }
+
+  // ── Load a previous session ─────────────────────────────────────────────
+  async function loadSession(sessionId, title) {
+    currentSessionId = sessionId;
+    localStorage.setItem('currentSessionId', sessionId);
+
+    document.getElementById('messages').innerHTML = '';
+    document.getElementById('current-chat-title').textContent = title || 'Chat';
+
+    // Mark active in sidebar
+    document.querySelectorAll('.chat-history-item').forEach(el => el.classList.remove('active-session'));
+    const activeEl = document.querySelector(`[data-session="${sessionId}"]`);
+    if (activeEl) activeEl.classList.add('active-session');
+
+    showView('chat', null);
+
+    try {
+      const res = await fetch(`${API}/api/sessions/${sessionId}`);
+      const data = await res.json();
+      const msgs = data.messages || [];
+
+      if (msgs.length === 0) {
+        addWelcomeMessage();
+        return;
+      }
+
+      // Group messages and show with date dividers
+      let lastDate = '';
+      msgs.forEach(msg => {
+        addMessage(msg.role === 'user' ? 'user' : 'ai', msg.content, false);
+      });
+
+      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+    } catch(e) {
+      addWelcomeMessage();
+    }
+  }
+
+  // ── Load chat history in sidebar ────────────────────────────────────────
+  async function loadChatHistory() {
+    try {
+      const res = await fetch(`${API}/api/sessions`);
+      const data = await res.json();
+      const sessions = data.sessions || [];
+      const container = document.getElementById('chat-history-list');
+
+      if (sessions.length === 0) {
+        container.innerHTML = '<div class="empty-history">No chats yet</div>';
+        return;
+      }
+
+      container.innerHTML = sessions.map(s => {
+        const date = formatDate(s.updated_at);
+        const isActive = s.session_id === currentSessionId;
+        return `
+          <div class="chat-history-item ${isActive ? 'active-session' : ''}"
+               data-session="${s.session_id}"
+               onclick="loadSession('${s.session_id}', ${JSON.stringify(s.title)})">
+            <div style="flex:1;min-width:0;">
+              <div class="chat-history-title">${escapeHtml(s.title)}</div>
+              <div class="chat-history-date">${date} · ${s.message_count} msgs</div>
+            </div>
+            <button class="delete-session-btn" onclick="deleteSession(event, '${s.session_id}')">✕</button>
+          </div>
+        `;
+      }).join('');
+    } catch(e) {
+      // Backend not ready yet
+    }
+  }
+
+  async function deleteSession(event, sessionId) {
+    event.stopPropagation();
+    await fetch(`${API}/api/sessions/${sessionId}`, { method: 'DELETE' });
+    if (sessionId === currentSessionId) {
+      newChat();
+    } else {
+      loadChatHistory();
+    }
+    toast('Chat deleted');
+  }
+
+  function formatDate(isoString) {
+    if (!isoString) return '';
+    const d = new Date(isoString);
+    const now = new Date();
+    const diff = now - d;
+    if (diff < 86400000) {
+      return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diff < 604800000) {
+      return d.toLocaleDateString([], { weekday: 'short' });
+    } else {
+      return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  }
+
+  // ── Chat ────────────────────────────────────────────────────────────────
+  function addMessage(role, content, scroll = true) {
+    const msgs = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message ' + (role === 'user' ? 'user' : 'ai');
+    const avatar = role === 'ai' ? '🤖' : '👤';
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    div.innerHTML = `
+      <div class="avatar ${role === 'user' ? 'user' : 'ai'}">${avatar}</div>
+      <div>
+        <div class="bubble">${role === 'ai' ? renderMarkdown(content) : escapeHtml(content)}</div>
+        <div class="msg-time">${time}</div>
+      </div>
+    `;
+    msgs.appendChild(div);
+    if (scroll) msgs.scrollTop = msgs.scrollHeight;
+    return div;
+  }
+
+  function addThinking() {
+    const msgs = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = 'message ai';
+    div.id = 'thinking-bubble';
+    div.innerHTML = `<div class="avatar ai">🤖</div><div class="bubble"><div class="thinking"><span></span><span></span><span></span></div></div>`;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function removeThinking() {
+    const el = document.getElementById('thinking-bubble');
+    if (el) el.remove();
+  }
+
+  async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg || isLoading) return;
+    input.value = '';
+    input.style.height = 'auto';
+    isLoading = true;
+
+    // Update title if first message
+    const title = document.getElementById('current-chat-title');
+    if (title.textContent === 'New Chat') {
+      title.textContent = msg.substring(0, 50) + (msg.length > 50 ? '...' : '');
+    }
+
+    addMessage('user', msg);
+    addThinking();
+    showView('chat', null);
+
+    try {
+      const res = await fetch(`${API}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg, session_id: currentSessionId })
+      });
+      const data = await res.json();
+      removeThinking();
+      addMessage('ai', data.response);
+      loadChatHistory(); // Refresh sidebar
+    } catch(e) {
+      removeThinking();
+      addMessage('ai', '⚠️ Could not connect to backend. Make sure it\'s running on port 8000.');
+    }
+    isLoading = false;
+  }
+
+  document.getElementById('chat-input').addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  });
+  document.getElementById('chat-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  // ── Views ────────────────────────────────────────────────────────────────
+  function showView(name, btnEl) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    if (btnEl) btnEl.classList.add('active');
+    if (name === 'tasks') loadTasks();
+    if (name === 'profile') loadProfile();
+    if (name === 'briefing') {
+      document.getElementById('brief-date').textContent =
+        new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    }
+  }
+
+  // ── Briefing ─────────────────────────────────────────────────────────────
+  async function loadBriefing() {
+    const box = document.getElementById('briefing-box');
+    box.style.display = 'block';
+    box.innerHTML = '<div class="thinking" style="padding:20px 0"><span></span><span></span><span></span></div>';
+    try {
+      const res = await fetch(`${API}/api/briefing`);
+      const data = await res.json();
+      box.innerHTML = renderMarkdown(data.briefing);
+    } catch { box.innerHTML = '⚠️ Could not load briefing.'; }
+  }
+
+  // ── Tasks ─────────────────────────────────────────────────────────────────
+  async function loadTasks() {
+    const res = await fetch(`${API}/api/tasks`).catch(() => null);
+    if (!res) return;
+    const data = await res.json();
+    const list = document.getElementById('task-list');
+    const tasks = data.tasks || [];
+    if (!tasks.length) { list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:20px 0">No tasks yet.</div>'; return; }
+    list.innerHTML = tasks.map(t => `
+      <div class="task-card ${t.done ? 'done' : ''}">
+        <div class="task-checkbox ${t.done ? 'checked' : ''}" onclick="toggleTask('${t.id}', ${t.done})">${t.done ? '✓' : ''}</div>
+        <div class="task-info">
+          <div class="task-title-text">${escapeHtml(t.title)}</div>
+          <div class="task-meta">
+            <span class="priority-tag p-${t.priority}-tag">${t.priority}</span>
+            ${t.due ? `<span>📅 ${t.due}</span>` : ''}
+            ${t.notes ? `<span>${escapeHtml(t.notes.substring(0,40))}</span>` : ''}
+          </div>
+        </div>
+        <button class="delete-btn" onclick="deleteTask('${t.id}')">🗑</button>
+      </div>
+    `).join('');
+  }
+
+  async function toggleTask(id, wasDone) {
+    if (!wasDone) { await fetch(`${API}/api/tasks/${id}/done`, { method: 'PUT' }); toast('Task completed ✓'); }
+    loadTasks();
+  }
+  async function deleteTask(id) { await fetch(`${API}/api/tasks/${id}`, { method: 'DELETE' }); loadTasks(); toast('Deleted'); }
+  function openModal() { document.getElementById('modal-overlay').classList.add('open'); }
+  function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+  async function saveTask() {
+    const title = document.getElementById('t-title').value.trim();
+    if (!title) return;
+    await fetch(`${API}/api/tasks`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, priority: document.getElementById('t-priority').value, due: document.getElementById('t-due').value || null, notes: document.getElementById('t-notes').value || null }) });
+    closeModal();
+    document.getElementById('t-title').value = '';
+    document.getElementById('t-notes').value = '';
+    loadTasks();
+    toast('Task added ✓');
+  }
+
+  // ── Profile ───────────────────────────────────────────────────────────────
+  async function loadProfile() {
+    const res = await fetch(`${API}/api/profile`).catch(() => null);
+    if (!res) return;
+    const p = await res.json();
+    document.getElementById('p-name').value = p.name || '';
+    document.getElementById('p-role').value = p.role || '';
+    document.getElementById('p-timezone').value = p.timezone || '';
+    document.getElementById('p-workstyle').value = p.work_style || '';
+    document.getElementById('p-about').value = p.about || '';
+    document.getElementById('p-projects').value = (p.current_projects || []).join(', ');
+    document.getElementById('p-skills').value = (p.skills || []).join(', ');
+    document.getElementById('p-goals').value = (p.goals || []).join('\n');
+    document.getElementById('p-notes').value = p.notes || '';
+  }
+  async function saveProfile() {
+    const data = { name: document.getElementById('p-name').value, role: document.getElementById('p-role').value, timezone: document.getElementById('p-timezone').value, work_style: document.getElementById('p-workstyle').value, about: document.getElementById('p-about').value, current_projects: document.getElementById('p-projects').value.split(',').map(s=>s.trim()).filter(Boolean), skills: document.getElementById('p-skills').value.split(',').map(s=>s.trim()).filter(Boolean), goals: document.getElementById('p-goals').value.split('\n').map(s=>s.trim()).filter(Boolean), notes: document.getElementById('p-notes').value };
+    await fetch(`${API}/api/profile`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data }) });
+    toast('Profile saved ✓');
+  }
+
+  // ── Markdown ──────────────────────────────────────────────────────────────
+  function renderMarkdown(text) {
+    return text
+      .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+      .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+      .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/^---$/gm, '<hr>')
+      .replace(/^\- (.+)$/gm, '<li>$1</li>')
+      .replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>')
+      .split('\n\n').map(p => p.startsWith('<') ? p : `<p>${p}</p>`).join('');
+  }
+
+  function escapeHtml(str) { return (str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  window.addEventListener('load', async () => {
+    // Try to restore previous session
+    const savedSession = localStorage.getItem('currentSessionId');
+    if (savedSession) {
+      currentSessionId = savedSession;
+      // Try loading it
+      try {
+        const res = await fetch(`${API}/api/sessions/${savedSession}`);
+        const data = await res.json();
+        if (data.messages && data.messages.length > 0) {
+          data.messages.forEach(msg => addMessage(msg.role === 'user' ? 'user' : 'ai', msg.content, false));
+          document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+          // Update title
+          const firstMsg = data.messages.find(m => m.role === 'user');
+          if (firstMsg) {
+            document.getElementById('current-chat-title').textContent = firstMsg.content.substring(0, 50);
+          }
+        } else {
+          addWelcomeMessage();
+        }
+      } catch(e) {
+        addWelcomeMessage();
+      }
+    } else {
+      addWelcomeMessage();
+    }
+    loadChatHistory();
+  });
+</script>
+</body>
+</html>
