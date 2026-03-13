@@ -7,11 +7,11 @@
 
 | Feature | Description |
 |---|---|
-| 💬 Chat | Talks to you with full memory of past conversations |
-| 🧠 Memory | Semantically searches your chat history to give context-aware answers |
-| 👤 Profile | Stores everything about you — your work, skills, projects, goals |
-| ☀️ Daily Briefing | AI-generated morning briefing based on your tasks and profile |
-| ✅ Tasks | Full to-do list with priorities — AI sees these and reminds you |
+| Chat | Talks to you with full memory of past conversations |
+| Memory | Semantically searches your chat history to give context-aware answers |
+| Profile | Stores everything about you — your work, skills, projects, goals |
+| Daily Briefing | AI-generated morning briefing based on your tasks and profile |
+| Tasks | Full to-do list with priorities — AI sees these and reminds you |
 
 ---
 
@@ -55,7 +55,7 @@ python3 --version
 ```
 
 If not, download from **https://python.org/downloads/**
-Make sure to check ✅ **"Add Python to PATH"** during installation.
+Make sure to check **"Add Python to PATH"** during installation.
 
 ---
 
@@ -122,7 +122,7 @@ INFO:     Uvicorn running on http://127.0.0.1:8000
 INFO:     Application startup complete.
 ```
 
-✅ **Backend is running!** Leave this terminal open.
+**Backend is running!** Leave this terminal open.
 
 ---
 
@@ -156,7 +156,7 @@ xdg-open frontend/index.html
    - Current projects
    - Skills
    - Goals
-3. Click **"💾 Save Profile"**
+3. Click **"Save Profile"**
 
 This becomes the foundation of what your AI knows about you.
 
@@ -164,7 +164,7 @@ This becomes the foundation of what your AI knows about you.
 
 ### Step 8 — Start Talking!
 
-Click **"💬 Chat"** and start a conversation. Tell your AI:
+Click **"Chat"** and start a conversation. Tell your AI:
 - What you're working on today
 - What your biggest challenges are
 - What you want to get done
@@ -173,7 +173,7 @@ The AI will remember **everything** you tell it across all conversations.
 
 ---
 
-## 🧠 How Memory Works
+## How Memory Works
 
 Every message you send is:
 1. **Stored in SQLite** — exact conversation history
@@ -188,10 +188,10 @@ So even if you talked about something 3 weeks ago, it can recall it.
 
 ---
 
-## ☀️ Using the Daily Briefing
+## Using the Daily Briefing
 
-1. Click **"☀️ Daily Briefing"**
-2. Click **"⚡ Generate Briefing"**
+1. Click **"Daily Briefing"**
+2. Click **"Generate Briefing"**
 
 The AI generates a personalized morning briefing based on:
 - Your profile
@@ -202,13 +202,13 @@ The AI generates a personalized morning briefing based on:
 
 ---
 
-## ✅ Task Management
+## Task Management
 
-1. Click **"✅ Tasks"**
+1. Click **"Tasks"**
 2. Click **"＋ Add Task"**
 3. Set title, priority (High/Medium/Low), due date
 4. Click the checkbox to mark done
-5. Click 🗑 to delete
+5. Click to delete
 
 Your AI **sees all your tasks** — so you can ask things like:
 - *"What should I focus on today?"*
@@ -217,7 +217,7 @@ Your AI **sees all your tasks** — so you can ask things like:
 
 ---
 
-## 💡 Things to Ask Your AI
+## Things to Ask Your AI
 
 ```
 "What did we talk about last time regarding my RMTI-RD research?"
@@ -231,7 +231,7 @@ Your AI **sees all your tasks** — so you can ask things like:
 
 ---
 
-## 🔧 Running Again After Restart
+## Running Again After Restart
 
 Every time you want to use it:
 
@@ -253,22 +253,22 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## 🚀 Future Upgrades (Phase 2)
+## Future Upgrades (Phase 2)
 
 Once this is working, here's what you can add:
 
 | Upgrade | How |
 |---|---|
-| 📧 Gmail integration | Connect Gmail API → AI reads your emails |
-| 📅 Google Calendar | AI knows your schedule automatically |
-| 📰 Real news | Add NewsAPI key → briefing includes actual headlines |
-| 🔔 Desktop notifications | Add daily cron job for auto-briefing |
-| 📱 Mobile access | Deploy backend to Railway/Render (free tier) |
-| 🧬 Fine-tuning | Train Llama on your conversations for a fully custom model |
+| Gmail integration | Connect Gmail API → AI reads your emails |
+| Google Calendar | AI knows your schedule automatically |
+| Real news | Add NewsAPI key → briefing includes actual headlines |
+| Desktop notifications | Add daily cron job for auto-briefing |
+| Mobile access | Deploy backend to Railway/Render (free tier) |
+| Fine-tuning | Train Llama on your conversations for a fully custom model |
 
 ---
 
-## ❗ Troubleshooting
+## Troubleshooting
 
 **"Could not connect to backend"**
 → Make sure the backend terminal is still running (`uvicorn main:app --reload`)
@@ -286,7 +286,7 @@ Once this is working, here's what you can add:
 
 ---
 
-## 🔒 Privacy
+## Privacy
 
 - Everything runs **locally on your machine**
 - Your conversations are stored in `backend/data/` (SQLite + ChromaDB)

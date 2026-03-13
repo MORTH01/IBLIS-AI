@@ -1,7 +1,25 @@
-# Never push these
-backend/.env
-backend/data/
-backend/venv/
-backend/__pycache__/
-backend/*.pyc
+# Environment & secrets
+.env
+*.env
+__pycache__/
+*.pyc
+*.pyo
 .DS_Store
+
+# Database / memory files
+*.db
+*.sqlite
+*.json
+data/
+memory_store/
+
+# Python
+venv/
+.venv/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+dist/
+build/
